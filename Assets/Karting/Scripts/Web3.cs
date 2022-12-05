@@ -42,8 +42,8 @@ public class Web3 : MonoBehaviour
     {
         ShowConnectedState();
         LoadBalance();
-        DisplayButtonText("0", buyBlueNftButton);
-        DisplayButtonText("1", buyRedNftButton);
+        DisplayButtonText("0", "2", buyBlueNftButton);
+        DisplayButtonText("1", "3", buyRedNftButton);
     }
 
     private void ShowConnectedState()
@@ -101,15 +101,18 @@ public class Web3 : MonoBehaviour
             .marketplace;
     }
 
-    private async void DisplayButtonText(string listingId, GameObject button)
+    private async void DisplayButtonText(
+        string tokenId,
+        string listingId,
+        GameObject button
+    )
     {
         // Button text starts out as "Loading..."
         // First, check to see if the you own the NFT
-        // Luckily for us, listing Id is the same as the NFT token ID.
         var owned = await GetEdition().ERC1155.GetOwned();
 
         // if owned contains a token with the same ID as the listing, then you own it
-        bool ownsNft = owned.Exists(nft => nft.metadata.id == listingId);
+        bool ownsNft = owned.Exists(nft => nft.metadata.id == tokenId);
         if (ownsNft)
         {
             var text = button.GetComponentInChildren<TMPro.TextMeshProUGUI>();
@@ -121,7 +124,7 @@ public class Web3 : MonoBehaviour
                 .onClick
                 .AddListener(() =>
                 {
-                    selectedKart = listingId;
+                    selectedKart = tokenId;
                     SceneManager.LoadSceneAsync("MainScene");
                 });
         }
@@ -144,27 +147,29 @@ public class Web3 : MonoBehaviour
                 .onClick
                 .AddListener(async () =>
                 {
-                    await BuyItem(listingId);
+                    await BuyItem(tokenId, listingId);
                     LoadBalance();
                 });
         }
     }
 
-    public async Task<TransactionResult> BuyItem(string listingId)
+    public async Task<TransactionResult>
+    BuyItem(string tokenId, string listingId)
     {
         var result = await GetMarketplace().BuyListing(listingId, 1);
 
         if (result.isSuccessful())
         {
             // Remove the buy item listener
-            var button = listingId == "0" ? buyBlueNftButton : buyRedNftButton;
+            var button = tokenId == "0" ? buyBlueNftButton : buyRedNftButton;
             button
                 .GetComponent<UnityEngine.UI.Button>()
                 .onClick
                 .RemoveAllListeners();
 
-            DisplayButtonText(listingId,
-            listingId == "0" ? buyBlueNftButton : buyRedNftButton);
+            DisplayButtonText(tokenId,
+            listingId,
+            tokenId == "0" ? buyBlueNftButton : buyRedNftButton);
         }
 
         return result;
