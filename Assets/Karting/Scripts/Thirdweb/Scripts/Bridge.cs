@@ -55,7 +55,7 @@ namespace Thirdweb
             ThirdwebInitialize(chainOrRPC, Utils.ToJson(options));
         }
 
-        public static async Task<string> Connect()
+        public static async Task<string> Connect(WalletConnection walletConnection)
         {
             if (Application.isEditor)
             {
@@ -65,9 +65,23 @@ namespace Thirdweb
             var task = new TaskCompletionSource<string>();
             string taskId = Guid.NewGuid().ToString();
             taskMap[taskId] = task;
-            ThirdwebConnect(taskId, jsCallback);
+            ThirdwebConnect(taskId, walletConnection.provider.ToString(), walletConnection.chainId, jsCallback);
             string result = await task.Task;
             return result;
+        }
+
+        public static async Task Disconnect()
+        {
+            if (Application.isEditor)
+            {
+                Debug.LogWarning("Disconnecting wallets is not supported in the editor. Please build and run the app instead.");
+                return;
+            }
+            var task = new TaskCompletionSource<string>();
+            string taskId = Guid.NewGuid().ToString();
+            taskMap[taskId] = task;
+            ThirdwebDisconnect(taskId, jsCallback);
+            await task.Task;
         }
 
         public static async Task SwitchNetwork(int chainId)
@@ -82,7 +96,6 @@ namespace Thirdweb
             taskMap[taskId] = task;
             ThirdwebSwitchNetwork(taskId, chainId, jsCallback);
             await task.Task;
-            return;
         }
 
         public static async Task<T> InvokeRoute<T>(string route, string[] body)
@@ -102,13 +115,32 @@ namespace Thirdweb
             return JsonConvert.DeserializeObject<Result<T>>(result).result;
         }
 
+        public static async Task FundWallet(FundWalletOptions payload)
+        {
+            if (Application.isEditor)
+            {
+                Debug.LogWarning("Interacting with the thirdweb SDK is not supported in the editor. Please build and run the app instead.");
+                return;
+            }
+            var msg = Utils.ToJson(payload);
+            string taskId = Guid.NewGuid().ToString();
+            var task = new TaskCompletionSource<string>();
+            taskMap[taskId] = task;
+            ThirdwebFundWallet(taskId, msg, jsCallback);
+            await task.Task;
+        }
+
         [DllImport("__Internal")]
         private static extern string ThirdwebInvoke(string taskId, string route, string payload, Action<string, string, string> cb);
         [DllImport("__Internal")]
         private static extern string ThirdwebInitialize(string chainOrRPC, string options);
         [DllImport("__Internal")]
-        private static extern string ThirdwebConnect(string taskId, Action<string, string, string> cb);
+        private static extern string ThirdwebConnect(string taskId, string wallet, int chainId, Action<string, string, string> cb);
+        [DllImport("__Internal")]
+        private static extern string ThirdwebDisconnect(string taskId, Action<string, string, string> cb);
         [DllImport("__Internal")]
         private static extern string ThirdwebSwitchNetwork(string taskId, int chainId, Action<string, string, string> cb);
+        [DllImport("__Internal")]
+        private static extern string ThirdwebFundWallet(string taskId, string payload, Action<string, string, string> cb);
     }
 }
