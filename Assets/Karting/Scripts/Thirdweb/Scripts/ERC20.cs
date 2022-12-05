@@ -55,17 +55,17 @@ namespace Thirdweb
         /// <summary>
         /// Get how much allowance the given address is allowed to spend on behalf of the connected wallet
         /// </summary>
-        public async Task<string> Allowance(string spender)
+        public async Task<CurrencyValue> Allowance(string spender)
         {
-            return await Bridge.InvokeRoute<string>(getRoute("allowance"), Utils.ToJsonStringArray(spender));
+            return await Bridge.InvokeRoute<CurrencyValue>(getRoute("allowance"), Utils.ToJsonStringArray(spender));
         }
 
         /// <summary>
         /// Get how much allowance the given address is allowed to spend on behalf of the specified wallet
         /// </summary>
-        public async Task<string> AllowanceOf(string owner, string spender)
+        public async Task<CurrencyValue> AllowanceOf(string owner, string spender)
         {
-            return await Bridge.InvokeRoute<string>(getRoute("allowanceOf"), Utils.ToJsonStringArray(owner, spender));
+            return await Bridge.InvokeRoute<CurrencyValue>(getRoute("allowanceOf"), Utils.ToJsonStringArray(owner, spender));
         }
 
         /// <summary>
@@ -105,17 +105,17 @@ namespace Thirdweb
         /// <summary>
         /// Claim a given amount of currency for compatible drop contracts
         /// </summary>
-        public async Task<TransactionResult[]> Claim(string amount)
+        public async Task<TransactionResult> Claim(string amount)
         {
-            return await Bridge.InvokeRoute<TransactionResult[]>(getRoute("claim"), Utils.ToJsonStringArray(amount));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("claim"), Utils.ToJsonStringArray(amount));
         }
 
         /// <summary>
         /// Claim a given amount of currency to a given destination wallet for compatible drop contracts
         /// </summary>
-        public async Task<TransactionResult[]> ClaimTo(string address, int amount)
+        public async Task<TransactionResult> ClaimTo(string address, int amount)
         {
-            return await Bridge.InvokeRoute<TransactionResult[]>(getRoute("claimTo"), Utils.ToJsonStringArray(address, amount));
+            return await Bridge.InvokeRoute<TransactionResult>(getRoute("claimTo"), Utils.ToJsonStringArray(address, amount));
         }
 
         /// <summary>
