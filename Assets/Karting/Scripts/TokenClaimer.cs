@@ -28,20 +28,36 @@ public class TokenClaimer : MonoBehaviour
                         }
                 });
 
-        await ConnectWallet();
+        Debug.Log(Web3.selectedWallet);
+
+        // Connect wallet
+        if (Web3.selectedWallet == "Metamask")
+        {
+            await Metamask();
+        }
+        if (Web3.selectedWallet == "Walletconnect")
+        {
+            await WalletConnect();
+        }
+        if (Web3.selectedWallet == "Coinbase")
+        {
+            await Coinbase();
+        }
         CheckBalance();
     }
 
     public async void Claim()
     {
-        await ConnectWallet();
+        // Update claim button text
+        claimButton.GetComponentInChildren<TMPro.TextMeshProUGUI>().text =
+            "Claiming...";
+
         await getTokenDrop().ERC20.Claim("25");
 
         // hide claim button
         claimButton.SetActive(false);
 
-        // Run OnEnable again to update balance
-        OnEnable();
+        CheckBalance();
     }
 
     private Contract getTokenDrop()
@@ -49,25 +65,51 @@ public class TokenClaimer : MonoBehaviour
         return sdk.GetContract("0x4a9659d5E0d416Ce8B9a4336132012Af8db4c5AB");
     }
 
-    private async Task<string> ConnectWallet()
-    {
-        return await sdk
-            .wallet
-            .Connect(new WalletConnection()
-            {
-                provider = WalletProvider.CoinbaseWallet, // Use Coinbase Wallet
-                chainId = 420 // Switch the wallet Goerli network on connection
-            });
-    }
-
     private async void CheckBalance()
     {
-        await ConnectWallet();
-
         // Set text to user's balance
         var bal = await getTokenDrop().ERC20.Balance();
 
         balanceText.GetComponent<TMPro.TextMeshProUGUI>().text =
             bal.displayValue + " " + bal.symbol;
+    }
+
+    public async Task<string> WalletConnect()
+    {
+        string address =
+            await sdk
+                .wallet
+                .Connect(new WalletConnection()
+                {
+                    provider = WalletProvider.WalletConnect,
+                    chainId = 420 // Switch the wallet Goerli network on connection
+                });
+        return address;
+    }
+
+    public async Task<string> Metamask()
+    {
+        string address =
+            await sdk
+                .wallet
+                .Connect(new WalletConnection()
+                {
+                    provider = WalletProvider.MetaMask,
+                    chainId = 420 // Switch the wallet Goerli network on connection
+                });
+        return address;
+    }
+
+    public async Task<string> Coinbase()
+    {
+        string address =
+            await sdk
+                .wallet
+                .Connect(new WalletConnection()
+                {
+                    provider = WalletProvider.CoinbaseWallet,
+                    chainId = 420 // Switch the wallet Goerli network on connection
+                });
+        return address;
     }
 }

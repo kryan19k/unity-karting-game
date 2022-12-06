@@ -19,7 +19,9 @@ public class Web3 : MonoBehaviour
 
     public static string selectedKart;
 
-    void OnEnable()
+    public static string selectedWallet;
+
+    async void OnEnable()
     {
         sdk =
             new ThirdwebSDK("optimism-goerli",
@@ -36,6 +38,25 @@ public class Web3 : MonoBehaviour
                                 }
                         }
                 });
+
+        if (selectedWallet == "Metamask")
+        {
+            await Metamask();
+        }
+        if (selectedWallet == "Walletconnect")
+        {
+            await WalletConnect();
+        }
+        if (selectedWallet == "Coinbase")
+        {
+            await Coinbase();
+        }
+
+        if (await sdk.wallet.IsConnected())
+        {
+            ShowConnectedState();
+            LoadInfo();
+        }
     }
 
     private void LoadInfo()
@@ -52,12 +73,22 @@ public class Web3 : MonoBehaviour
         connectedState.SetActive(true);
     }
 
-    public async void ConnectWallet()
+    public async void ConnectWallet(string provider)
     {
-        await EnsureWalletState();
+        if (provider == "Metamask")
+        {
+            await Metamask();
+        }
+        if (provider == "Walletconnect")
+        {
+            await WalletConnect();
+        }
+        if (provider == "Coinbase")
+        {
+            await Coinbase();
+        }
 
-        disconnectedState.SetActive(false);
-        connectedState.SetActive(true);
+        ShowConnectedState();
         LoadInfo();
     }
 
@@ -68,10 +99,56 @@ public class Web3 : MonoBehaviour
                 .wallet
                 .Connect(new WalletConnection()
                 {
-                    provider = WalletProvider.CoinbaseWallet, // Use Coinbase Wallet
+                    provider = WalletProvider.CoinbaseWallet, // Use Coinbase Wallet by default
                     chainId = 420 // Switch the wallet Goerli network on connection
                 });
 
+        selectedWallet = "Coinbase";
+        return address;
+    }
+
+    public async Task<string> WalletConnect()
+    {
+        string address =
+            await sdk
+                .wallet
+                .Connect(new WalletConnection()
+                {
+                    provider = WalletProvider.WalletConnect,
+                    chainId = 420 // Switch the wallet Goerli network on connection
+                });
+
+        selectedWallet = "Walletconnect";
+        return address;
+    }
+
+    public async Task<string> Metamask()
+    {
+        string address =
+            await sdk
+                .wallet
+                .Connect(new WalletConnection()
+                {
+                    provider = WalletProvider.MetaMask,
+                    chainId = 420 // Switch the wallet Goerli network on connection
+                });
+
+        selectedWallet = "Metamask";
+        return address;
+    }
+
+    public async Task<string> Coinbase()
+    {
+        string address =
+            await sdk
+                .wallet
+                .Connect(new WalletConnection()
+                {
+                    provider = WalletProvider.CoinbaseWallet,
+                    chainId = 420 // Switch the wallet Goerli network on connection
+                });
+
+        selectedWallet = "Coinbase";
         return address;
     }
 
@@ -156,6 +233,11 @@ public class Web3 : MonoBehaviour
     public async Task<TransactionResult>
     BuyItem(string tokenId, string listingId)
     {
+        // set text to "Loading..."
+        var text =
+            buyBlueNftButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+        text.text = "Loading...";
+
         var result = await GetMarketplace().BuyListing(listingId, 1);
 
         if (result.isSuccessful())
@@ -170,6 +252,10 @@ public class Web3 : MonoBehaviour
             DisplayButtonText(tokenId,
             listingId,
             tokenId == "0" ? buyBlueNftButton : buyRedNftButton);
+        }
+        else
+        {
+            text.text = "Error. Try again.";
         }
 
         return result;
