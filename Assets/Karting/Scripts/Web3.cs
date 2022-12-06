@@ -233,9 +233,13 @@ public class Web3 : MonoBehaviour
     public async Task<TransactionResult>
     BuyItem(string tokenId, string listingId)
     {
-        // set text to "Loading..."
         var text =
-            buyBlueNftButton.GetComponentInChildren<TMPro.TextMeshProUGUI>();
+            tokenId == "0"
+                ? buyBlueNftButton
+                    .GetComponentInChildren<TMPro.TextMeshProUGUI>()
+                : buyRedNftButton
+                    .GetComponentInChildren<TMPro.TextMeshProUGUI>();
+
         text.text = "Loading...";
 
         var result = await GetMarketplace().BuyListing(listingId, 1);
